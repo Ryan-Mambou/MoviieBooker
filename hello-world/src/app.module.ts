@@ -7,8 +7,9 @@ import { UserService } from './user/user.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { MoviesModule } from './movies/movies.module';
+import { ReservationModule } from './reservation/reservation.module';
 @Module({
-  imports: [UserModule, MoviesModule],
+  imports: [UserModule, MoviesModule, ReservationModule],
   controllers: [AppController, UserController],
   providers: [AppService, UserService, PrismaService, JwtService],
 })
