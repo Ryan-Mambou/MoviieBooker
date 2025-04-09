@@ -15,9 +15,9 @@ export class ReservationController {
   }
 
   @ApiOperation({ summary: 'Get all reservations' })
-  @Get('/')
-  getAllReservations() {
-    return this.reservationService.getAllReservations();
+  @Get('/:userId')
+  getAllReservationsByUser(@Param('userId') userId: string) {
+    return this.reservationService.getAllReservationsByUser(userId);
   }
 
   @ApiOperation({ summary: 'Delete Operations' })

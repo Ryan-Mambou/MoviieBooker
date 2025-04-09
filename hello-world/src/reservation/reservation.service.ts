@@ -39,8 +39,17 @@ export class ReservationService {
     );
   }
 
-  async getAllReservations() {
-    return this.prisma.reservation.findMany();
+  async getAllReservationsByUser(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: parseInt(userId) },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    return this.prisma.reservation.findMany({
+      where: { userId: parseInt(userId) },
+    });
   }
 
   async deleteReservation(id: string) {
