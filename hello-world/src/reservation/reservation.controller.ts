@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Body, Delete, Param } from '@nestjs/common';
 import { ReservationDto } from './dtos/reservation.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { ReservationService } from './reservation.service';
@@ -12,5 +12,17 @@ export class ReservationController {
   @Post()
   createReservation(@Body() reservationDto: ReservationDto) {
     return this.reservationService.createReservation(reservationDto);
+  }
+
+  @ApiOperation({ summary: 'Get all reservations' })
+  @Get('/')
+  getAllReservations() {
+    return this.reservationService.getAllReservations();
+  }
+
+  @ApiOperation({ summary: 'Delete Operations' })
+  @Delete('/:id')
+  deleteReservation(@Param('id') id: string) {
+    return this.reservationService.deleteReservation(id);
   }
 }

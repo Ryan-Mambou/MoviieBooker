@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ReservationDto } from './dtos/reservation.dto';
 import { PrismaService } from '../../prisma/prisma.service';
 
@@ -33,5 +37,21 @@ export class ReservationService {
     throw new BadRequestException(
       'Reservation is not possible, Time frame taken',
     );
+  }
+
+  async getAllReservations() {
+    return this.prisma.reservation.findMany();
+  }
+
+  async deleteReservation(id: string) {
+    const reservation = await this.prisma.reservation.findUnique({
+      where: { id: parseInt(id) },
+    });
+
+    if (!reservation) {
+      throw new NotFoundException('Reservation not found');
+    }
+
+    return this.prisma.reservation.delete({ where: { id: parseInt(id) } });
   }
 }
