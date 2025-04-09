@@ -11,6 +11,7 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
+  private readonly emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -22,6 +23,9 @@ export class UserService {
     });
 
     if (!existingUser) {
+      if (!this.emailRegex.test(registerDto.email)) {
+        throw new BadRequestException('Invalid email format!');
+      }
       const { username, email, password } = registerDto;
       const hashedPassword = await bcrypt.hash(password, 10);
       const user = await this.prisma.user.create({
