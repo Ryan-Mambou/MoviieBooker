@@ -1,44 +1,55 @@
-import { useState } from "react";
-import { Movie } from "../../types";
+import React from "react";
 import { Link } from "react-router-dom";
+import { Movie } from "../../types";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardTitle,
+  CardDescription,
+} from "../ui/card";
+import { Button } from "../ui/button";
 
 interface MovieCardProps {
   movie: Movie;
+  onReservationSuccess?: () => void;
 }
 
-const MovieCard = ({ movie }: MovieCardProps) => {
-  const posterUrl = movie.poster_path
+const MovieCard: React.FC<MovieCardProps> = ({ movie }) => {
+  const imageUrl = movie.poster_path
     ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-    : "/placeholder-movie.jpg";
+    : "/placeholder-poster.jpg";
 
   return (
-    <Link to={`/movies/${movie.id}`} className="group">
-      <div className="bg-white rounded-lg shadow-md overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-xl">
-        <div className="aspect-w-2 aspect-h-3 relative">
+    <Card className="overflow-hidden h-full flex flex-col transition-all duration-200 hover:shadow-lg">
+      <Link to={`/movies/${movie.id}`} className="relative">
+        <div className="relative w-full h-64">
           <img
-            src={posterUrl}
-            alt={movie.title}
+            src={imageUrl}
+            alt={`${movie.title} poster`}
             className="w-full h-full object-cover"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = "/placeholder-movie.jpg";
-            }}
           />
-          <div className="absolute top-2 right-2 bg-indigo-600 text-white px-2 py-1 rounded-md text-sm font-medium">
-            {movie.vote_average ? movie.vote_average.toFixed(1) : "N/A"}
+          <div className="absolute top-2 right-2 bg-yellow-400 text-gray-900 font-bold px-2 py-1 rounded-md">
+            {movie.vote_average.toFixed(1)}
           </div>
         </div>
-        <div className="p-4">
-          <h3 className="text-lg font-semibold text-gray-900 line-clamp-1 group-hover:text-indigo-600">
-            {movie.title}
-          </h3>
-          <p className="text-sm text-gray-500">
-            {movie.release_date
-              ? new Date(movie.release_date).getFullYear()
-              : "Unknown"}
-          </p>
-        </div>
-      </div>
-    </Link>
+      </Link>
+
+      <CardContent className="flex-grow pt-4">
+        <CardTitle className="text-lg line-clamp-1">{movie.title}</CardTitle>
+        <CardDescription className="mt-2">
+          {movie.release_date
+            ? new Date(movie.release_date).getFullYear()
+            : "N/A"}
+        </CardDescription>
+      </CardContent>
+
+      <CardFooter>
+        <Button variant="primary" size="sm" asChild className="w-full">
+          <Link to={`/movies/${movie.id}`}>View Details</Link>
+        </Button>
+      </CardFooter>
+    </Card>
   );
 };
 

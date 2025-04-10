@@ -1,18 +1,23 @@
 export interface Movie {
   id: number;
   title: string;
-  poster_path: string;
-  vote_average: number;
-  release_date: string;
   overview: string;
+  poster_path: string;
   backdrop_path: string;
+  release_date: string;
+  vote_average: number;
+  vote_count: number;
+  popularity: number;
+  genre_ids: number[];
   original_language: string;
   original_title: string;
-  popularity: number;
-  adult: boolean;
   video: boolean;
-  vote_count: number;
-  genre_ids: number[];
+  adult: boolean;
+}
+
+export interface Genre {
+  id: number;
+  name: string;
 }
 
 export interface MovieResponse {
@@ -22,15 +27,25 @@ export interface MovieResponse {
   total_results: number;
 }
 
-export interface Genre {
-  id: number;
-  name: string;
-}
-
 export interface User {
   id: number;
   username: string;
   email: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+}
+
+export interface RegisterForm {
+  username: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginForm {
+  email: string;
+  password: string;
 }
 
 export interface Reservation {
@@ -40,17 +55,17 @@ export interface Reservation {
   reservationDate: string;
 }
 
-export interface LoginCredentials {
-  email: string;
-  password: string;
+export interface ReservationForm {
+  movieName: string;
+  userId: number;
 }
 
-export interface RegisterCredentials {
-  username: string;
-  email: string;
-  password: string;
+export interface PaginationParams {
+  page: number;
+  limit: number;
 }
 
-export interface AuthResponse {
-  access_token: string;
+export interface SearchParams extends PaginationParams {
+  query?: string;
+  sort_by?: string;
 }

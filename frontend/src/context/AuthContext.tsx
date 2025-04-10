@@ -1,115 +1,115 @@
-import {
+import React, {
   createContext,
   useContext,
   useState,
   useEffect,
   ReactNode,
 } from "react";
-import { User, LoginCredentials, RegisterCredentials } from "../types";
-import { login as apiLogin, register as apiRegister } from "../services/api";
-import { jwtDecode } from "jwt-decode";
+import { authApi } from "../services/api";
+import { User } from "../types";
 
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
+  loading: boolean;
   error: string | null;
-  login: (credentials: LoginCredentials) => Promise<void>;
-  register: (credentials: RegisterCredentials) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
+// Create the AuthContext with a default value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
-  children: ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+// Create a provider component
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Check if the user is already logged in on mount
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      try {
-        const decoded = jwtDecode<{
-          id: number;
-          username: string;
-          email: string;
-        }>(token);
-        setUser({
-          id: decoded.id,
-          username: decoded.username,
-          email: decoded.email,
-        });
-      } catch (error) {
-        localStorage.removeItem("token");
+    const verifyToken = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
       }
-    }
-    setIsLoading(false);
+
+      try {
+        const userData = await authApi.verifyToken();
+        setUser(userData);
+      } catch {
+        // Token is invalid or expired
+        localStorage.removeItem("token");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyToken();
   }, []);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setIsLoading(true);
-      setError(null);
-      const { access_token } = await apiLogin(credentials);
+      const response = await authApi.login(email, password);
+      // Handle response based on the actual API response structure
+      const { access_token } = response;
+
+      // Save token to localStorage
       localStorage.setItem("token", access_token);
 
-      const decoded = jwtDecode<{
-        id: number;
-        username: string;
-        email: string;
-      }>(access_token);
-      setUser({
-        id: decoded.id,
-        username: decoded.username,
-        email: decoded.email,
-      });
+      // After login, verify the token to get user data
+      const userData = await authApi.verifyToken();
+      setUser(userData);
     } catch (error) {
-      setError("Login failed. Please check your credentials.");
-      throw error;
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during login";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
-  const register = async (credentials: RegisterCredentials) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const { access_token } = await apiRegister(credentials);
-      localStorage.setItem("token", access_token);
+  const register = async (name: string, email: string, password: string) => {
+    setLoading(true);
+    setError(null);
 
-      const decoded = jwtDecode<{
-        id: number;
-        username: string;
-        email: string;
-      }>(access_token);
-      setUser({
-        id: decoded.id,
-        username: decoded.username,
-        email: decoded.email,
-      });
+    try {
+      await authApi.register(name, email, password);
+      // After registration, user needs to login
     } catch (error) {
-      setError("Registration failed. Please try again.");
-      throw error;
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "An error occurred during registration";
+      setError(errorMessage);
+      throw new Error(errorMessage);
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
   };
 
   const logout = () => {
+    // Remove token from localStorage
     localStorage.removeItem("token");
+
+    // Clear user state
     setUser(null);
   };
 
   const value = {
     user,
     isAuthenticated: !!user,
-    isLoading,
+    loading,
     error,
     login,
     register,
@@ -119,10 +119,13 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
-export const useAuth = () => {
+// Custom hook to use the auth context
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
+
   if (context === undefined) {
     throw new Error("useAuth must be used within an AuthProvider");
   }
+
   return context;
 };

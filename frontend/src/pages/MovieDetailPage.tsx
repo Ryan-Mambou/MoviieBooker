@@ -1,137 +1,147 @@
-import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
-import { sampleMovies } from "../components/movies/sampleData";
+import React, { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Movie } from "../types";
+import { useAuth } from "../context/AuthContext";
+import { moviesApi, reservationApi } from "../services/api";
+import { Button } from "../components/ui/button";
+import { Card, CardContent } from "../components/ui/card";
 
-const MovieDetailPage = () => {
+const MovieDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
+
   const [movie, setMovie] = useState<Movie | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isBooking, setIsBooking] = useState(false);
+  const [bookingSuccess, setBookingSuccess] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchMovieDetail = async () => {
+    const fetchMovieDetails = async () => {
       if (!id) return;
 
       try {
-        setIsLoading(true);
-        // Simulate API delay
-        await new Promise((resolve) => setTimeout(resolve, 800));
-
-        // In a real implementation, you would fetch from an API
-        // const response = await fetch(`/api/movies/${id}`);
-        // const data = await response.json();
-        // setMovie(data);
-
-        // Using sample data for now
-        const foundMovie = sampleMovies.find((m) => m.id === parseInt(id));
-
-        if (foundMovie) {
-          setMovie(foundMovie);
-        } else {
-          setError("Movie not found");
-        }
+        setLoading(true);
+        const data = await moviesApi.getMovieById(id);
+        setMovie(data);
       } catch (err) {
-        console.error("Error fetching movie details:", err);
-        setError("Failed to load movie details");
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    fetchMovieDetail();
+    fetchMovieDetails();
   }, [id]);
 
-  if (isLoading) {
+  const handleBooking = async () => {
+    if (!isAuthenticated) {
+      navigate("/login", { state: { from: `/movies/${id}` } });
+      return;
+    }
+
+    if (!movie || !user) return;
+
+    setIsBooking(true);
+    setBookingError(null);
+
+    try {
+      await reservationApi.createReservation({
+        movieName: movie.title,
+        userId: user.id,
+      });
+
+      setBookingSuccess(true);
+    } catch (err) {
+      setBookingError(
+        err instanceof Error ? err.message : "An error occurred during booking"
+      );
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 flex justify-center items-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
       </div>
     );
   }
 
   if (error || !movie) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div
-          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative"
-          role="alert"
-        >
-          <strong className="font-bold">Error!</strong>
-          <span className="block sm:inline"> {error || "Movie not found"}</span>
-        </div>
+      <div className="text-center p-8">
+        <p className="text-red-500 mb-4">{error || "Movie not found"}</p>
+        <Button onClick={() => navigate("/movies")} variant="primary">
+          Back to Movies
+        </Button>
       </div>
     );
   }
 
-  const backdropUrl = movie.backdrop_path
-    ? `https://image.tmdb.org/t/p/original${movie.backdrop_path}`
-    : "/placeholder-backdrop.jpg";
-
-  const posterUrl = movie.poster_path
-    ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
-    : "/placeholder-movie.jpg";
-
   return (
-    <div>
-      {/* Backdrop */}
-      <div className="relative w-full h-[300px] lg:h-[400px] overflow-hidden">
-        <div className="absolute inset-0 bg-black/50 z-10"></div>
-        <img
-          src={backdropUrl}
-          alt={`${movie.title} backdrop`}
-          className="w-full h-full object-cover"
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = "/placeholder-backdrop.jpg";
-          }}
-        />
-      </div>
+    <div className="container mx-auto px-4 py-8">
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="md:w-1/3">
+          <img
+            src={
+              movie.poster_path
+                ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+                : "/placeholder-poster.jpg"
+            }
+            alt={`${movie.title} poster`}
+            className="w-full h-auto rounded-lg shadow-lg"
+          />
+        </div>
 
-      {/* Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex flex-col md:flex-row gap-8 -mt-24 relative z-20">
-          {/* Poster */}
-          <div className="w-[200px] h-[300px] mx-auto md:mx-0 shadow-xl rounded-lg overflow-hidden flex-shrink-0">
-            <img
-              src={posterUrl}
-              alt={movie.title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = "/placeholder-movie.jpg";
-              }}
-            />
+        <div className="md:w-2/3">
+          <h1 className="text-3xl font-bold mb-2">{movie.title}</h1>
+
+          <div className="flex items-center mb-4">
+            <span className="bg-yellow-400 text-gray-900 font-bold px-2 py-1 rounded-md mr-3">
+              {movie.vote_average.toFixed(1)}
+            </span>
+            <span className="text-gray-600 dark:text-gray-300">
+              {movie.release_date
+                ? new Date(movie.release_date).getFullYear()
+                : "N/A"}
+            </span>
           </div>
 
-          {/* Details */}
-          <div className="flex-1 bg-white p-6 rounded-lg shadow-md">
-            <h1 className="text-3xl font-bold text-gray-900">{movie.title}</h1>
-
-            <div className="flex items-center gap-4 mt-2">
-              <span className="bg-indigo-600 text-white px-2 py-1 rounded-md text-sm font-medium">
-                {movie.vote_average.toFixed(1)}
-              </span>
-              <span className="text-gray-500">
-                {movie.release_date
-                  ? new Date(movie.release_date).getFullYear()
-                  : "Unknown"}
-              </span>
-            </div>
-
-            <div className="mt-6">
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                Overview
-              </h2>
-              <p className="text-gray-600">
-                {movie.overview || "No overview available"}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <p className="text-gray-700 dark:text-gray-300">
+                {movie.overview}
               </p>
-            </div>
+            </CardContent>
+          </Card>
 
-            <div className="mt-8">
-              <button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
-                Book Tickets
-              </button>
+          {bookingSuccess ? (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+              Booking successful! You have reserved a ticket for {movie.title}.
             </div>
-          </div>
+          ) : bookingError ? (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {bookingError}
+            </div>
+          ) : null}
+
+          <Button
+            onClick={handleBooking}
+            disabled={isBooking || bookingSuccess}
+            variant={bookingSuccess ? "secondary" : "primary"}
+            size="lg"
+            className={bookingSuccess ? "bg-green-500 hover:bg-green-600" : ""}
+          >
+            {bookingSuccess
+              ? "Booked Successfully"
+              : isBooking
+              ? "Booking..."
+              : "Book Now"}
+          </Button>
         </div>
       </div>
     </div>
