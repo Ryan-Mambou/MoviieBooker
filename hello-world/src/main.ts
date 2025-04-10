@@ -8,6 +8,14 @@ async function bootstrap() {
     .setTitle('MOVIEAPI')
     .setDescription('API TO HANDLE MOVIE DATA')
     .setVersion('1.0')
+    .addBearerAuth({
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'Authorization',
+      description: 'JWT Authorization header using the Bearer scheme',
+      in: 'header',
+    })
     .addTag('API')
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
