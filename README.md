@@ -161,7 +161,7 @@ DATABASE_URL=your_database_connection_string
 
 L'application est déployée à:
 
-- Frontend: [Application MoviieBooker](https://your-frontend-url.com)
+- Frontend: [Application MoviieBooker](https://movie-app-project-efrei.netlify.app/)
 - API Backend: https://moviiebooker-qqi3.onrender.com
 
 ## Sources
