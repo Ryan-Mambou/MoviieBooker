@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, HttpException } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { AxiosResponse } from 'axios';
-import { map, Observable } from 'rxjs';
+import { AxiosResponse, AxiosError } from 'axios';
+import { catchError, map, Observable } from 'rxjs';
 import { Genre, Movie, MovieResponse } from './types';
 
 @Injectable()
@@ -53,7 +53,19 @@ export class MoviesService {
           Authorization: `Bearer ${process.env.MOVIE_BEARER_TOKEN}`,
         },
       })
-      .pipe(map((response: AxiosResponse<Movie>) => response.data));
+      .pipe(
+        map((response: AxiosResponse<Movie>) => response.data),
+        catchError((error: AxiosError) => {
+          throw new HttpException(
+            {
+              statusCode: error.response?.status,
+              message: error.response?.data,
+              error: error.response?.data,
+            },
+            error.response?.status || 500,
+          );
+        }),
+      );
   }
 
   getGenres(): Observable<Genre[]> {

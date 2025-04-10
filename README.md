@@ -171,7 +171,7 @@ Pour ce projet, les ressources suivantes ont été utilisées comme références
 ### Documentation
 
 - **Swagger**: [Integrating Swagger with NestJS: A Step-by-Step Guide](https://rehmat-sayany.medium.com/integrating-swagger-with-nestjs-a-step-by-step-guide-abd532743c43)
-- **NestJS HttpService**: [Using Axios directly](https://docs.nestjs.com/techniques/http-module#using-axios-directly)
+- **NestJS HttpService**: [Using Axios directly](https://docs.nestjs.com/techniques/http-module#using-axios-directly) and https://docs.nestjs.com/techniques/http-module
 - **NestJS Controllers & Query Params**: [NestJS Controllers Documentation](https://docs.nestjs.com/controllers)
 
 ### Projets de référence
