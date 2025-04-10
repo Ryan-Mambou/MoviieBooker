@@ -164,10 +164,16 @@ L'application est déployée à:
 - Frontend: [Application MoviieBooker](https://your-frontend-url.com)
 - API Backend: https://moviiebooker-qqi3.onrender.com
 
-## Contribution
+## Sources
 
-1. Forkez le dépôt
-2. Créez une branche de fonctionnalité (`git checkout -b feature/amazing-feature`)
-3. Committez vos modifications (`git commit -m 'Ajout d'une fonctionnalité incroyable'`)
-4. Poussez vers la branche (`git push origin feature/amazing-feature`)
-5. Ouvrez une Pull Request
+Pour ce projet, les ressources suivantes ont été utilisées comme références:
+
+### Documentation
+
+- **Swagger**: [Integrating Swagger with NestJS: A Step-by-Step Guide](https://rehmat-sayany.medium.com/integrating-swagger-with-nestjs-a-step-by-step-guide-abd532743c43)
+- **NestJS HttpService**: [Using Axios directly](https://docs.nestjs.com/techniques/http-module#using-axios-directly)
+- **NestJS Controllers & Query Params**: [NestJS Controllers Documentation](https://docs.nestjs.com/controllers)
+
+### Projets de référence
+
+- **Authentification**: [OTP-Verification](https://github.com/Ryan-Mambou/OTP-Verification/tree/main/src) - Implémentation de référence pour l'authentification
