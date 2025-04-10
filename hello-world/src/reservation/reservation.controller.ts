@@ -10,7 +10,7 @@ import {
 import { ReservationDto } from './dtos/reservation.dto';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ReservationService } from './reservation.service';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 @ApiTags('Reservation')
 @Controller('reservation')
 export class ReservationController {

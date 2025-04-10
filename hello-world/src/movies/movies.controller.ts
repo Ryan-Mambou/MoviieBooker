@@ -8,7 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { Observable } from 'rxjs';
 import { Genre, Movie, MovieResponse } from './types';
-import { JwtAuthGuard } from 'src/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../guards/jwt-auth.guard';
 
 @ApiTags('Movies')
 @Controller('/')
