@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { registerUser } from "../services/api";
+import { registerUser, loginUser } from "../services/api";
+import axios, { AxiosError } from "axios";
 
-const Register = () => {
+interface RegisterProps {
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
+}
+
+const Register = ({ setIsLoggedIn }: RegisterProps) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -17,9 +22,48 @@ const Register = () => {
 
     try {
       await registerUser({ username, email, password });
-      navigate("/login");
+      // After successful registration, also log the user in
+      const loginResponse = await loginUser({ email, password });
+      localStorage.setItem("token", loginResponse.access_token);
+      setIsLoggedIn(true);
+      navigate("/");
     } catch (err) {
-      setError("Registration failed. Please try again.");
+      // Handle backend error response format
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        // Check for specific error cases
+        if (axiosError.response?.status === 409) {
+          setError(
+            "This email is already registered. Please log in instead or use a different email."
+          );
+        } else if (axiosError.response?.status === 400) {
+          setError(
+            "Invalid registration information. Please check your details and try again."
+          );
+        } else if (axiosError.response?.data) {
+          const backendError = axiosError.response.data as Record<
+            string,
+            unknown
+          >;
+          if (typeof backendError === "string") {
+            setError(backendError);
+          } else if (backendError.message) {
+            setError(
+              Array.isArray(backendError.message)
+                ? (backendError.message as string[]).join(", ")
+                : (backendError.message as string)
+            );
+          } else if (backendError.error) {
+            setError(backendError.error as string);
+          } else {
+            setError("Registration failed. Please try again.");
+          }
+        } else {
+          setError("Registration failed. Please try again.");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
       console.error("Registration error:", err);
     } finally {
       setLoading(false);

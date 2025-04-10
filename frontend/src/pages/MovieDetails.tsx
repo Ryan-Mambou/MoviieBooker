@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { getMovieById, createReservation } from "../services/api";
 import { Movie } from "../types";
+import axios, { AxiosError } from "axios";
 
 const MovieDetails = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [movie, setMovie] = useState<Movie | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +22,38 @@ const MovieDetails = () => {
         setMovie(movieData);
         setError(null);
       } catch (err) {
-        setError("Failed to fetch movie details. Please try again later.");
+        if (axios.isAxiosError(err)) {
+          const axiosError = err as AxiosError;
+          if (axiosError.response?.status === 401) {
+            setError(
+              "You are unauthorized. Please log in to view movie details."
+            );
+          } else if (axiosError.response?.data) {
+            const backendError = axiosError.response.data as Record<
+              string,
+              unknown
+            >;
+            if (typeof backendError === "string") {
+              setError(backendError);
+            } else if (backendError.message) {
+              setError(
+                Array.isArray(backendError.message)
+                  ? (backendError.message as string[]).join(", ")
+                  : (backendError.message as string)
+              );
+            } else if (backendError.error) {
+              setError(backendError.error as string);
+            } else {
+              setError(
+                "Failed to fetch movie details. Please try again later."
+              );
+            }
+          } else {
+            setError("Failed to fetch movie details. Please try again later.");
+          }
+        } else {
+          setError("An unexpected error occurred. Please try again.");
+        }
         console.error("Error fetching movie:", err);
       } finally {
         setLoading(false);
@@ -37,7 +68,7 @@ const MovieDetails = () => {
 
     const token = localStorage.getItem("token");
     if (!token) {
-      navigate("/login");
+      setError("You are unauthorized. Please log in to book this movie.");
       return;
     }
 
@@ -52,7 +83,35 @@ const MovieDetails = () => {
       setReservationSuccess(true);
       setError(null);
     } catch (err) {
-      setError("Failed to create reservation. Please try again.");
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        if (axiosError.response?.status === 401) {
+          setError("You are unauthorized. Please log in to book this movie.");
+          localStorage.removeItem("token"); // Clear invalid token
+        } else if (axiosError.response?.data) {
+          const backendError = axiosError.response.data as Record<
+            string,
+            unknown
+          >;
+          if (typeof backendError === "string") {
+            setError(backendError);
+          } else if (backendError.message) {
+            setError(
+              Array.isArray(backendError.message)
+                ? (backendError.message as string[]).join(", ")
+                : (backendError.message as string)
+            );
+          } else if (backendError.error) {
+            setError(backendError.error as string);
+          } else {
+            setError("Failed to create reservation. Please try again.");
+          }
+        } else {
+          setError("Failed to create reservation. Please try again.");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
       console.error("Error creating reservation:", err);
     } finally {
       setReservationLoading(false);

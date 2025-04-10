@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { Movie } from "../types";
 import { getMovies, searchMovies } from "../services/api";
+import axios, { AxiosError } from "axios";
 
 const Home = () => {
   const [movies, setMovies] = useState<Movie[]>([]);
@@ -23,7 +24,34 @@ const Home = () => {
       setTotalPages(response.total_pages);
       setError(null);
     } catch (err) {
-      setError("Failed to fetch movies. Please try again later.");
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        if (axiosError.response?.status === 401) {
+          setError("You are unauthorized. Please log in to view movies.");
+        } else if (axiosError.response?.data) {
+          const backendError = axiosError.response.data as Record<
+            string,
+            unknown
+          >;
+          if (typeof backendError === "string") {
+            setError(backendError);
+          } else if (backendError.message) {
+            setError(
+              Array.isArray(backendError.message)
+                ? (backendError.message as string[]).join(", ")
+                : (backendError.message as string)
+            );
+          } else if (backendError.error) {
+            setError(backendError.error as string);
+          } else {
+            setError("Failed to fetch movies. Please try again later.");
+          }
+        } else {
+          setError("Failed to fetch movies. Please try again later.");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
       console.error("Error fetching movies:", err);
     } finally {
       setLoading(false);
@@ -45,7 +73,34 @@ const Home = () => {
       setTotalPages(response.total_pages);
       setError(null);
     } catch (err) {
-      setError("Failed to search movies. Please try again later.");
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        if (axiosError.response?.status === 401) {
+          setError("You are unauthorized. Please log in to search movies.");
+        } else if (axiosError.response?.data) {
+          const backendError = axiosError.response.data as Record<
+            string,
+            unknown
+          >;
+          if (typeof backendError === "string") {
+            setError(backendError);
+          } else if (backendError.message) {
+            setError(
+              Array.isArray(backendError.message)
+                ? (backendError.message as string[]).join(", ")
+                : (backendError.message as string)
+            );
+          } else if (backendError.error) {
+            setError(backendError.error as string);
+          } else {
+            setError("Failed to search movies. Please try again later.");
+          }
+        } else {
+          setError("Failed to search movies. Please try again later.");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
       console.error("Error searching movies:", err);
     } finally {
       setLoading(false);

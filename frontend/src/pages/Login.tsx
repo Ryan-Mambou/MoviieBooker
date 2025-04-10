@@ -1,8 +1,13 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { loginUser } from "../services/api";
+import axios, { AxiosError } from "axios";
 
-const Login = () => {
+interface LoginProps {
+  setIsLoggedIn: (isLoggedIn: boolean) => void;
+}
+
+const Login = ({ setIsLoggedIn }: LoginProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -17,9 +22,40 @@ const Login = () => {
     try {
       const response = await loginUser({ email, password });
       localStorage.setItem("token", response.access_token);
+      setIsLoggedIn(true);
       navigate("/");
     } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      // Handle backend error response format
+      if (axios.isAxiosError(err)) {
+        const axiosError = err as AxiosError;
+        if (axiosError.response?.status === 401) {
+          setError(
+            "You are not authorized. Please log in with valid credentials."
+          );
+        } else if (axiosError.response?.data) {
+          const backendError = axiosError.response.data as Record<
+            string,
+            unknown
+          >;
+          if (typeof backendError === "string") {
+            setError(backendError);
+          } else if (backendError.message) {
+            setError(
+              Array.isArray(backendError.message)
+                ? (backendError.message as string[]).join(", ")
+                : (backendError.message as string)
+            );
+          } else if (backendError.error) {
+            setError(backendError.error as string);
+          } else {
+            setError("Invalid email or password. Please try again.");
+          }
+        } else {
+          setError("Authentication failed. Please try again.");
+        }
+      } else {
+        setError("An unexpected error occurred. Please try again.");
+      }
       console.error("Login error:", err);
     } finally {
       setLoading(false);
